@@ -91,7 +91,7 @@ def deit_small_patch16_224(pretrained=False, **kwargs):
             if k in model.state_dict().keys():
                 if model.state_dict()[k].numel() == v.numel():
                     pre_dict[k] = v
-        missing_keys, unexpected_keys = model.load_state_dict(checkpoint["model"], strict=False)
+        missing_keys, unexpected_keys = model.load_state_dict(pre_dict, strict=False)
         #model.load_state_dict(checkpoint["model"])
     return model
 
