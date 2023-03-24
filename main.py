@@ -242,7 +242,7 @@ def main(args):
         trn_df,
         val_df,
         CFG.input_size,
-        CFG.batch_size
+        args.batch_size
     )
     args.nb_classes = 384
     # model = timm.create_model(
