@@ -66,6 +66,13 @@ def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
     print("Averaged stats:", metric_logger)
     return {k: meter.global_avg for k, meter in metric_logger.meters.items()}
 
+import numpy as np
+from scipy import spatial
+def cosine_similarity(y_trues, y_preds):
+    return np.mean([
+        1 - spatial.distance.cosine(y_true, y_pred) 
+        for y_true, y_pred in zip(y_trues, y_preds)
+    ])
 
 @torch.no_grad()
 def evaluate(data_loader, criterion,model, device):
@@ -86,16 +93,22 @@ def evaluate(data_loader, criterion,model, device):
             output = model(images)
             target_t = torch.ones(images.size(0)).to(device)
             loss = criterion(output, target,target_t)
-
+            val_cos = cosine_similarity(
+                    output.detach().cpu().numpy(), 
+                    target.detach().cpu().numpy()
+                )
         #acc1, acc5 = accuracy(output, target, topk=(1, 5))
 
         #batch_size = images.shape[0]
         metric_logger.update(loss=loss.item())
+        metric_logger.update(cos=val_cos)
         # metric_logger.meters['acc1'].update(acc1.item(), n=batch_size)
         # metric_logger.meters['acc5'].update(acc5.item(), n=batch_size)
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()
-    print('*  loss {losses.global_avg:.3f}'
-          .format(losses=metric_logger.loss))
+    print('loss:',loss)
+    print('cos:',val_cos)
+    # print('*  loss {losses.global_avg:.3f} ; cos {cos}'
+    #       .format(losses=metric_logger.loss,cos))
 
     return {k: meter.global_avg for k, meter in metric_logger.meters.items()}
