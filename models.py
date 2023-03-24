@@ -85,7 +85,14 @@ def deit_small_patch16_224(pretrained=False, **kwargs):
             url="https://dl.fbaipublicfiles.com/deit/deit_small_patch16_224-cd65a155.pth",
             map_location="cpu", check_hash=True
         )
-        model.load_state_dict(checkpoint["model"])
+        pre_weights = checkpoint['model']
+        pre_dict = {}
+        for k, v in pre_weights.items():
+            if k in model.state_dict().keys():
+                if model.state_dict()[k].numel() == v.numel():
+                    pre_dict[k] = v
+        missing_keys, unexpected_keys = model.load_state_dict(checkpoint["model"], strict=False)
+        #model.load_state_dict(checkpoint["model"])
     return model
 
 
