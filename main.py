@@ -320,19 +320,8 @@ def main(args):
         img_size=args.input_size
     )
 
-    model.set_grad_checkpointing()
-    if args.pretrained:
-        print(torch.load('/mnt/sdd/syz/kaggle/davit/model_best.pth.tar'))
-        # pre_weights = torch.load('/mnt/sdd/syz/kaggle/davit/model_best.pth.tar')['state_dict']
-        # pre_dict = {}
-        # # pre_dict = {k: v for k, v in pre_weights.items() if models.state_dict()[k].numel() == v.numel()}
-        # # missing_keys, unexpected_keys = models.load_state_dict(pre_dict, strict=False)
-        # for k, v in pre_weights.items():
-        #     if k in model.state_dict().keys():
-        #         if model.state_dict()[k].numel() == v.numel():
-        #             pre_dict[k] = v
-        # # pre_dict = {k: v for k, v in checkpoint.items() if model.state_dict()[k].numel() == v.numel() if k in model.state_dict().keys()}
-        # missing_keys, unexpected_keys = model.load_state_dict(pre_dict, strict=False)
+    #model.set_grad_checkpointing()
+    
     if args.finetune:
         if args.finetune.startswith('https'):
             checkpoint = torch.hub.load_state_dict_from_url(
