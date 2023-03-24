@@ -70,7 +70,13 @@ def deit_tiny_patch16_224(pretrained=False, **kwargs):
             url="https://dl.fbaipublicfiles.com/deit/deit_tiny_patch16_224-a1311bcf.pth",
             map_location="cpu", check_hash=True
         )
-        model.load_state_dict(checkpoint["model"])
+        pre_weights = checkpoint['model']
+        pre_dict = {}
+        for k, v in pre_weights.items():
+            if k in model.state_dict().keys():
+                if model.state_dict()[k].numel() == v.numel():
+                    pre_dict[k] = v
+        missing_keys, unexpected_keys = model.load_state_dict(pre_dict, strict=False)
     return model
 
 
@@ -107,7 +113,14 @@ def deit_base_patch16_224(pretrained=False, **kwargs):
             url="https://dl.fbaipublicfiles.com/deit/deit_base_patch16_224-b5f2ef4d.pth",
             map_location="cpu", check_hash=True
         )
-        model.load_state_dict(checkpoint["model"])
+        pre_weights = checkpoint['model']
+        pre_dict = {}
+        for k, v in pre_weights.items():
+            if k in model.state_dict().keys():
+                if model.state_dict()[k].numel() == v.numel():
+                    pre_dict[k] = v
+        missing_keys, unexpected_keys = model.load_state_dict(pre_dict, strict=False)
+        #model.load_state_dict(checkpoint["model"])
     return model
 
 
@@ -122,7 +135,14 @@ def deit_tiny_distilled_patch16_224(pretrained=False, **kwargs):
             url="https://dl.fbaipublicfiles.com/deit/deit_tiny_distilled_patch16_224-b40b3cf7.pth",
             map_location="cpu", check_hash=True
         )
-        model.load_state_dict(checkpoint["model"])
+        pre_weights = checkpoint['model']
+        pre_dict = {}
+        for k, v in pre_weights.items():
+            if k in model.state_dict().keys():
+                if model.state_dict()[k].numel() == v.numel():
+                    pre_dict[k] = v
+        missing_keys, unexpected_keys = model.load_state_dict(pre_dict, strict=False)
+        #model.load_state_dict(checkpoint["model"])
     return model
 
 
@@ -137,7 +157,14 @@ def deit_small_distilled_patch16_224(pretrained=False, **kwargs):
             url="https://dl.fbaipublicfiles.com/deit/deit_small_distilled_patch16_224-649709d9.pth",
             map_location="cpu", check_hash=True
         )
-        model.load_state_dict(checkpoint["model"])
+        pre_weights = checkpoint['model']
+        pre_dict = {}
+        for k, v in pre_weights.items():
+            if k in model.state_dict().keys():
+                if model.state_dict()[k].numel() == v.numel():
+                    pre_dict[k] = v
+        missing_keys, unexpected_keys = model.load_state_dict(pre_dict, strict=False)
+        #model.load_state_dict(checkpoint["model"])
     return model
 
 
@@ -152,7 +179,14 @@ def deit_base_distilled_patch16_224(pretrained=False, **kwargs):
             url="https://dl.fbaipublicfiles.com/deit/deit_base_distilled_patch16_224-df68dfff.pth",
             map_location="cpu", check_hash=True
         )
-        model.load_state_dict(checkpoint["model"])
+        #model.load_state_dict(checkpoint["model"])
+        pre_weights = checkpoint['model']
+        pre_dict = {}
+        for k, v in pre_weights.items():
+            if k in model.state_dict().keys():
+                if model.state_dict()[k].numel() == v.numel():
+                    pre_dict[k] = v
+        missing_keys, unexpected_keys = model.load_state_dict(pre_dict, strict=False)
     return model
 
 
@@ -167,7 +201,14 @@ def deit_base_patch16_384(pretrained=False, **kwargs):
             url="https://dl.fbaipublicfiles.com/deit/deit_base_patch16_384-8de9b5d1.pth",
             map_location="cpu", check_hash=True
         )
-        model.load_state_dict(checkpoint["model"])
+        pre_weights = checkpoint['model']
+        pre_dict = {}
+        for k, v in pre_weights.items():
+            if k in model.state_dict().keys():
+                if model.state_dict()[k].numel() == v.numel():
+                    pre_dict[k] = v
+        missing_keys, unexpected_keys = model.load_state_dict(pre_dict, strict=False)
+       # model.load_state_dict(checkpoint["model"])
     return model
 
 
@@ -182,5 +223,12 @@ def deit_base_distilled_patch16_384(pretrained=False, **kwargs):
             url="https://dl.fbaipublicfiles.com/deit/deit_base_distilled_patch16_384-d0272ac0.pth",
             map_location="cpu", check_hash=True
         )
-        model.load_state_dict(checkpoint["model"])
+        pre_weights = checkpoint['model']
+        pre_dict = {}
+        for k, v in pre_weights.items():
+            if k in model.state_dict().keys():
+                if model.state_dict()[k].numel() == v.numel():
+                    pre_dict[k] = v
+        missing_keys, unexpected_keys = model.load_state_dict(pre_dict, strict=False)
+        #model.load_state_dict(checkpoint["model"])
     return model
