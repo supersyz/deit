@@ -312,7 +312,7 @@ def main(args):
         #'kg chang'
     model = create_model(
         args.model,
-        pretrained=False,
+        pretrained=True,
         num_classes=384,
         drop_rate=args.drop,
         drop_path_rate=args.drop_path,
