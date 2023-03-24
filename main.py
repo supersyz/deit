@@ -443,7 +443,7 @@ def main(args):
     #     criterion, teacher_model, args.distillation_type, args.distillation_alpha, args.distillation_tau
     # )
 
-    output_dir = Path(args.output_dir)
+    #output_dir = Path(args.output_dir)
     if args.resume:
         if args.resume.startswith('https'):
             checkpoint = torch.hub.load_state_dict_from_url(
@@ -482,7 +482,7 @@ def main(args):
 
         lr_scheduler.step(epoch)
         if args.output_dir:
-            checkpoint_paths = [output_dir + '/' + str(epoch) +   'checkpoint.pth']
+            checkpoint_paths = [args.output_dir + '/' + str(epoch) +   'checkpoint.pth']
             for checkpoint_path in checkpoint_paths:
                 utils.save_on_master({
                     'model': model_without_ddp.state_dict(),
