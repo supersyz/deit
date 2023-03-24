@@ -482,6 +482,7 @@ def main(args):
 
         lr_scheduler.step(epoch)
         if args.output_dir:
+            
             checkpoint_paths = [args.output_dir + '/' + str(epoch) +   'checkpoint.pth']
             for checkpoint_path in checkpoint_paths:
                 utils.save_on_master({
@@ -523,7 +524,7 @@ def main(args):
         
         
         if args.output_dir and utils.is_main_process():
-            with (output_dir / "log.txt").open("a") as f:
+            with (os.path.join(args.output_dir , "log.txt")).open("a") as f:
                 f.write(json.dumps(log_stats) + "\n")
 
     total_time = time.time() - start_time
