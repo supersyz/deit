@@ -14,7 +14,8 @@ from timm.utils import accuracy, ModelEma
 
 from losses import DistillationLoss
 import utils
-
+import numpy as np
+from scipy import spatial
 
 def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
                     data_loader: Iterable, optimizer: torch.optim.Optimizer,
@@ -41,7 +42,10 @@ def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
             outputs = model(samples)
             target_t = torch.ones(samples.size(0)).to(device)
             loss = criterion(outputs, targets, target_t)
-
+            train_cos = cosine_similarity(
+                    outputs.detach().cpu().numpy(), 
+                    targets.detach().cpu().numpy()
+                )
         loss_value = loss.item()
 
         if not math.isfinite(loss_value):
@@ -58,7 +62,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
         torch.cuda.synchronize()
         if model_ema is not None:
             model_ema.update(model)
-
+        metric_logger.update(cos=train_cos)
         metric_logger.update(loss=loss_value)
         metric_logger.update(lr=optimizer.param_groups[0]["lr"])
     # gather the stats from all processes
@@ -66,8 +70,7 @@ def train_one_epoch(model: torch.nn.Module, criterion: DistillationLoss,
     print("Averaged stats:", metric_logger)
     return {k: meter.global_avg for k, meter in metric_logger.meters.items()}
 
-import numpy as np
-from scipy import spatial
+
 def cosine_similarity(y_trues, y_preds):
     return np.mean([
         1 - spatial.distance.cosine(y_true, y_pred) 
