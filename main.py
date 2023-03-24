@@ -252,7 +252,9 @@ def main(args):
     # )
     # model.set_grad_checkpointing()
     # model.to(device)
-    data_loader_train,data_loader_val = dataloaders(['train']),dataloaders(['val'])
+    data_loader_train = dataloaders['train']
+    data_loader_val = dataloaders['val']
+
     # dataset_train, args.nb_classes = build_dataset(is_train=True, args=args)
     # dataset_val, _ = build_dataset(is_train=False, args=args)
 
