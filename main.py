@@ -25,7 +25,25 @@ from augment import new_data_aug_generator
 
 import models
 import models_v2
-
+import os
+import random
+import numpy as np
+import pandas as pd
+from PIL import Image
+from tqdm.notebook import tqdm
+from scipy import spatial
+from sklearn.model_selection import train_test_split
+import torch
+from torch import nn
+from torch.utils.data import Dataset, DataLoader
+from torch.optim.lr_scheduler import CosineAnnealingLR
+from torchvision import transforms
+import timm
+from timm.utils import AverageMeter
+import sys
+sys.path.append('/mnt/sdd/syz/kaggle/sentence-transformers-222/sentence-transformers')
+from sentence_transformers import SentenceTransformer
+import warnings
 import utils
 
 
@@ -201,51 +219,84 @@ def main(args):
     # random.seed(seed)
 
     cudnn.benchmark = True
+    'kg change'
+    class CFG:
+        model_name = 'vit_base_patch16_224'
+        input_size = 224
+        batch_size = 64
+        num_epochs = 3
+        lr = 1e-4
+        seed = 42
+    
+    from diffuse import get_dataloaders
+    
+    def csv_change(p):
+        p = str(p)
+        r = p.replace('/kaggle/input','/mnt/sdd/syz/kaggle/diffusiondb-filtered-images')
+        return r
 
-    dataset_train, args.nb_classes = build_dataset(is_train=True, args=args)
-    dataset_val, _ = build_dataset(is_train=False, args=args)
-
-    if True:  # args.distributed:
-        num_tasks = utils.get_world_size()
-        global_rank = utils.get_rank()
-        if args.repeated_aug:
-            sampler_train = RASampler(
-                dataset_train, num_replicas=num_tasks, rank=global_rank, shuffle=True
-            )
-        else:
-            sampler_train = torch.utils.data.DistributedSampler(
-                dataset_train, num_replicas=num_tasks, rank=global_rank, shuffle=True
-            )
-        if args.dist_eval:
-            if len(dataset_val) % num_tasks != 0:
-                print('Warning: Enabling distributed evaluation with an eval dataset not divisible by process number. '
-                      'This will slightly alter validation results as extra duplicate entries are added to achieve '
-                      'equal num of samples per-process.')
-            sampler_val = torch.utils.data.DistributedSampler(
-                dataset_val, num_replicas=num_tasks, rank=global_rank, shuffle=False)
-        else:
-            sampler_val = torch.utils.data.SequentialSampler(dataset_val)
-    else:
-        sampler_train = torch.utils.data.RandomSampler(dataset_train)
-        sampler_val = torch.utils.data.SequentialSampler(dataset_val)
-
-    data_loader_train = torch.utils.data.DataLoader(
-        dataset_train, sampler=sampler_train,
-        batch_size=args.batch_size,
-        num_workers=args.num_workers,
-        pin_memory=args.pin_mem,
-        drop_last=True,
+    df = pd.read_csv('/mnt/sdd/syz/kaggle/diffusiondb-filtered-images/diffusiondb.csv',converters={'filepath':csv_change})
+    #df = pd.read_csv('/kaggle/input/diffusiondb-data-cleansing/diffusiondb.csv')
+    trn_df, val_df = train_test_split(df, test_size=0.1, random_state=CFG.seed)
+    dataloaders = get_dataloaders(
+        trn_df,
+        val_df,
+        CFG.input_size,
+        CFG.batch_size
     )
+
+    # model = timm.create_model(
+    #     model_name,
+    #     pretrained=True,
+    #     num_classes=384
+    # )
+    # model.set_grad_checkpointing()
+    # model.to(device)
+    data_loader_train,data_loader_val = dataloaders(['train']),dataloaders(['val'])
+    # dataset_train, args.nb_classes = build_dataset(is_train=True, args=args)
+    # dataset_val, _ = build_dataset(is_train=False, args=args)
+
+    # if True:  # args.distributed:
+    #     num_tasks = utils.get_world_size()
+    #     global_rank = utils.get_rank()
+    #     if args.repeated_aug:
+    #         sampler_train = RASampler(
+    #             dataset_train, num_replicas=num_tasks, rank=global_rank, shuffle=True
+    #         )
+    #     else:
+    #         sampler_train = torch.utils.data.DistributedSampler(
+    #             dataset_train, num_replicas=num_tasks, rank=global_rank, shuffle=True
+    #         )
+    #     if args.dist_eval:
+    #         if len(dataset_val) % num_tasks != 0:
+    #             print('Warning: Enabling distributed evaluation with an eval dataset not divisible by process number. '
+    #                   'This will slightly alter validation results as extra duplicate entries are added to achieve '
+    #                   'equal num of samples per-process.')
+    #         sampler_val = torch.utils.data.DistributedSampler(
+    #             dataset_val, num_replicas=num_tasks, rank=global_rank, shuffle=False)
+    #     else:
+    #         sampler_val = torch.utils.data.SequentialSampler(dataset_val)
+    # else:
+    #     sampler_train = torch.utils.data.RandomSampler(dataset_train)
+    #     sampler_val = torch.utils.data.SequentialSampler(dataset_val)
+
+    # data_loader_train = torch.utils.data.DataLoader(
+    #     dataset_train, sampler=sampler_train,
+    #     batch_size=args.batch_size,
+    #     num_workers=args.num_workers,
+    #     pin_memory=args.pin_mem,
+    #     drop_last=True,
+    # )
     if args.ThreeAugment:
         data_loader_train.dataset.transform = new_data_aug_generator(args)
 
-    data_loader_val = torch.utils.data.DataLoader(
-        dataset_val, sampler=sampler_val,
-        batch_size=int(1.5 * args.batch_size),
-        num_workers=args.num_workers,
-        pin_memory=args.pin_mem,
-        drop_last=False
-    )
+    # data_loader_val = torch.utils.data.DataLoader(
+    #     dataset_val, sampler=sampler_val,
+    #     batch_size=int(1.5 * args.batch_size),
+    #     num_workers=args.num_workers,
+    #     pin_memory=args.pin_mem,
+    #     drop_last=False
+    # )
 
     mixup_fn = None
     mixup_active = args.mixup > 0 or args.cutmix > 0. or args.cutmix_minmax is not None
@@ -256,16 +307,18 @@ def main(args):
             label_smoothing=args.smoothing, num_classes=args.nb_classes)
 
     print(f"Creating model: {args.model}")
+        #'kg chang'
     model = create_model(
         args.model,
         pretrained=False,
-        num_classes=args.nb_classes,
+        num_classes=384,
         drop_rate=args.drop,
         drop_path_rate=args.drop_path,
         drop_block_rate=None,
         img_size=args.input_size
     )
 
+    model.set_grad_checkpointing()
                     
     if args.finetune:
         if args.finetune.startswith('https'):
@@ -407,7 +460,7 @@ def main(args):
         lr_scheduler.step(args.start_epoch)
     if args.eval:
         test_stats = evaluate(data_loader_val, model, device)
-        print(f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['acc1']:.1f}%")
+        print(f"Accuracy of the network on the  test images: {test_stats['acc1']:.1f}%")
         return
 
     print(f"Start training for {args.epochs} epochs")
@@ -441,7 +494,7 @@ def main(args):
              
 
         test_stats = evaluate(data_loader_val, model, device)
-        print(f"Accuracy of the network on the {len(dataset_val)} test images: {test_stats['acc1']:.1f}%")
+        print(f"Accuracy of the network on the  test images: {test_stats['acc1']:.1f}%")
         
         if max_accuracy < test_stats["acc1"]:
             max_accuracy = test_stats["acc1"]
