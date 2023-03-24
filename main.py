@@ -244,7 +244,7 @@ def main(args):
         CFG.input_size,
         CFG.batch_size
     )
-
+    args.nb_classes = 384
     # model = timm.create_model(
     #     model_name,
     #     pretrained=True,
