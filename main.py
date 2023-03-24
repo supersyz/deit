@@ -462,7 +462,7 @@ def main(args):
         lr_scheduler.step(args.start_epoch)
     if args.eval:
         test_stats = evaluate(data_loader_val, model, device)
-        print(f"Accuracy of the network on the  test images: {test_stats['acc1']:.1f}%")
+
         return
 
     print(f"Start training for {args.epochs} epochs")
